@@ -90,3 +90,12 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
   })
   export class AppModule {}
   ```
+
+## Overview del proyecto: PlatziStore
+  A lo largo de este curso, continuarás trabajando con el proyecto iniciado en el [Curso de Backend con NestJS](https://platzi.com/cursos/nestjs/). Te recomendamos tomar ese curso antes de continuar con este. Allí, se desarrolló una API Rest para el manejo de un catálogo de productos y en este curso llevaremos esa aplicación un paso más allá.
+
+  Prepárate para desarrollar tu primera API con NestJS de forma profesional.
+
+  Recuerda en la rama [2-step](https://github.com/platzi/nestjs-modular/tree/2-step) esta la solución en donde estan los controllers, servicios y dtos.
+  
+  [Organización para Insomnia](https://static.platzi.com/media/public/uploads/insomnia_2021-03-09_d2d933fc-d36a-44b3-a47d-fdce06e83f15.json)
