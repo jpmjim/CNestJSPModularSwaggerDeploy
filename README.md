@@ -99,3 +99,99 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
   Recuerda en la rama [2-step](https://github.com/platzi/nestjs-modular/tree/2-step) esta la solución en donde estan los controllers, servicios y dtos.
   
   [Organización para Insomnia](https://static.platzi.com/media/public/uploads/insomnia_2021-03-09_d2d933fc-d36a-44b3-a47d-fdce06e83f15.json)
+
+
+## Interacción entre módulos
+  Dentro de un módulo, puedes tener la necesidad de utilizar un servicio que pertenece a otro módulo. Importar estos servicios en otros módulos requiere de un paso adicional.
+
+  ### Importaciones de servicios compartidos
+  Si tienes un **Módulo A** que posee un *Servicio A* y un segundo **Módulo B** requiere hacer uso de este, debes exportar el servicio para que otro módulo pueda utilizarlo.
+  ```typescript
+  // Módulo A
+  import { ServiceA } from './service-A.service';
+
+  @Module({
+    providers: [ServiceA],
+    exports: [ServiceA]
+  })
+  export class ModuleA {}
+  ```
+  ```typescript
+  // Módulo B
+  import { ServiceA } from './module-A/service-A.service';
+
+  @Module({
+    providers: [ServiceA]
+  })
+  export class ModuleB {}
+  ```
+  Debes indicar en la propiedad <code>exports</code> del decorador <code>@Module()</code> que un módulo es exportable para que otro módulo pueda importarlo en sus <code>providers</code>.
+
+  De esta manera, evitas errores de compilación de tu aplicación que ocurren cuando importas servicios de otros módulos que no están siendo exportados correctamente.
+
+  ***Ejemplo de interacción entre módulos***
+
+  A continuación, podrás ver el código que necesitas para hacer que los módulos interactúen entre sí.
+  ```typescript
+  // src/users/entities/order.entity.ts
+  import { User } from './user.entity';
+  import { Product } from './../../products/entities/product.entity';
+
+  export class Order { //  // 👈 new entity
+    date: Date;
+    user: User;
+    products: Product[];
+  }
+  ```
+  ```typescript
+  // src/users/controllers/users.controller.ts
+  @Get(':id/orders') //  👈 new endpoint
+  getOrders(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.getOrderByUser(id);
+  }
+  ```
+  ```typescript
+  // src/users/services/users.service.ts
+  ...
+  import { Order } from '../entities/order.entity';
+  import { ProductsService } from './../../products/services/products.service';
+
+  @Injectable()
+  export class UsersService {
+    constructor(private productsService: ProductsService) {}
+    ...
+
+    getOrderByUser(id: number): Order { // 👈 new method
+      const user = this.findOne(id);
+      return {
+        date: new Date(),
+        user,
+        products: this.productsService.findAll(),
+      };
+    }
+  }
+  ```
+  ```typescript
+  // src/products/products.module.ts
+  import { Module } from '@nestjs/common';
+  ....
+  @Module({
+    controllers: [ProductsController, CategoriesController, BrandsController],
+    providers: [ProductsService, BrandsService, CategoriesService],
+    exports: [ProductsService], // 👈 Export ProductsService
+  })
+  export class ProductsModule {}
+  ```
+  ```typescript
+  // src/users/users.module.ts
+  import { Module } from '@nestjs/common';
+  ...
+  import { ProductsModule } from '../products/products.module';
+
+  @Module({
+    imports: [ProductsModule], // 👈 Import ProductsModule
+    controllers: [CustomerController, UsersController],
+    providers: [CustomersService, UsersService],
+  })
+  export class UsersModule {}
+  ```
