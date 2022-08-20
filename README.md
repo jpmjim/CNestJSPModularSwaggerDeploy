@@ -601,3 +601,138 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
   }
   ```
 
+## Configuración por ambientes
+  **Una aplicación profesional suele tener más de un ambiente**. Ambiente local, ambiente de desarrollo, ambiente de pruebas, producción, entre otros, dependiendo la necesidad del equipo y de la organización. Veamos cómo puedes administrar N cantidad de ambientes en NestJS.
+
+  ### Configuración dinámica del entorno
+  Configuremos la aplicación para intercambiar fácilmente entre diversos ambientes, cada uno con su propia configuración.
+
+  **1. Archivo principal para manejo de ambientes**
+
+  Crea un archivo llamado <code>enviroments.ts</code> (o el nombre que prefieras) que contendrá un objeto con una propiedad por cada ambiente que tenga tu aplicación.
+  ```typescript
+  // src/enviroments.ts
+  export const enviroments = {
+    dev: '.env',
+    test: '.test.env',
+    prod: '.prod.env',
+  };
+  ```
+  **2. Configuración por ambiente**
+
+  Crea un archivo <code>.env</code> por cada ambiente que necesites. Recuerda que todos los archivos finalizados en <code>.env</code> no deben guardarse en GIT.
+  ```typescript
+  // .test.env
+  DATABASE_NAME=my_db_test
+  API_KEY=12345
+  ```
+  ```typescript
+  // .prod.env
+  DATABASE_NAME=my_db_prod
+  API_KEY=67890
+  ```
+  **3. Importando variables de entorno**
+
+  Importa en el módulo principal de tu aplicación el archivo principal para manejo de ambientes y, a través de una única variable de entorno llamada **NODE_ENV**, elegirás qué configuración usar.
+
+  **NODE_ENV** es una variable de entorno propia de NodeJS y del framework Express que se encuentra preseteada en tu aplicación.
+  ```typescript
+  import { enviroments } from './enviroments'; // 👈
+
+  @Module({
+    imports: [
+      ConfigModule.forRoot({
+        envFilePath: enviroments[process.env.NODE_ENV] || '.env', // 👈
+        isGlobal: true,
+      }),
+    ],
+  })
+  export class AppModule {}
+  ```
+  **4. Inicio de la aplicación**
+
+  Finalmente, para iniciar tu aplicación basta con el comando <code>NODE_ENV=test npm run start:dev</code> o <code>NODE_ENV=prod npm run start:dev</code> para configurar la variable de entorno principal **NODE_ENV** y escoger qué configuración utilizar.
+
+  **5. Utilizando las variables de entorno**
+
+  Puedes utilizar las variables de entorno en tu aplicación de dos maneras. Con el objeto global de NodeJS llamado <code>process</code>:
+  ```typescript
+  process.env.DATABASE_NAME
+  process.env.API_KEY
+  ```
+  O puedes usar estas variables a través del servicio ConfigService proveniente de <code>@nestjs/config</code>.
+  ```typescript
+  import { ConfigService } from '@nestjs/config';
+
+  @Injectable()
+  export class AppService {
+
+    constructor(private config: ConfigService) {}
+    
+    getEnvs(): string {
+      const apiKey = this.config.get<string>('API_KEY');
+      const name = this.config.get('DATABASE_NAME');
+      return `Envs: ${apiKey} ${name}`;
+    }
+  }
+  ```
+  De este modo, configura de la mejor manera que necesites para tu aplicación el manejo de múltiples ambientes, cada uno con su propia configuración.
+
+  **Cuadro de código para la configuración de ambientes**
+  ```typescript
+  // .stag.env
+  DATABASE_NAME=my_db_stag
+  API_KEY=333
+  ```
+  ```typescript
+  // .prod.env
+  DATABASE_NAME=my_db_prod
+  API_KEY=999
+  ```
+  ```typescript
+  // src/enviroments.ts
+  export const enviroments = {
+    dev: '.env',
+    stag: '.stag.env',
+    prod: '.prod.env',
+  };
+  ```
+  ```typescript
+  // src/app.module.ts
+  ...
+  import { enviroments } from './enviroments'; // 👈
+
+  @Module({
+    imports: [
+      ConfigModule.forRoot({
+        envFilePath: enviroments[process.env.NODE_ENV] || '.env', // 👈
+        isGlobal: true,
+      }),
+      ...
+    ],
+    ...
+  })
+  export class AppModule {}
+  ```
+  ```typescript
+  // src/app.service.ts
+  import { ConfigService } from '@nestjs/config'; // 👈
+
+  @Injectable()
+  export class AppService {
+    constructor(
+      @Inject('TASKS') private tasks: any[],
+      private config: ConfigService,  // 👈
+    ) {}
+    getHello(): string {
+      const apiKey = this.config.get<string>('API_KEY');  // 👈
+      const name = this.config.get('DATABASE_NAME');  // 👈
+      return `Hello World! ${apiKey} ${name}`;
+    }
+  }
+  ```
+  Rin with NODE_ENV // 👈
+  ```bash
+  NODE_ENV=prod npm run start:dev
+  NODE_ENV=stag npm run start:dev
+  ```
