@@ -503,3 +503,101 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
 
   }
   ```
+
+## Módulo de configuración
+  A medida que tu aplicación crezca, puedes llegar a necesitar decenas de variables de entorno. Variables que cambian de valor dependiendo si estás en un entorno de desarrollo, de pruebas o de producción.
+
+  ### Variables de entorno en NestJS
+  El manejo de variables de entorno en NestJS se realiza de una forma muy sencilla. Instala la dependencia <code>npm i @nestjs/config</code> e importa el módulo **ConfigModule** en el módulo principal de tu aplicación. 
+  ```typescript
+  import { ConfigModule } from '@nestjs/config';
+
+  @Module({
+    imports: [
+      ConfigModule.forRoot({
+        envFilePath: '.env',
+        isGlobal: true
+      }),
+    ],
+  })
+  export class AppModule {}
+  ```
+  El archivo que almacena las variables de entorno suele llamarse <code>.env</code>. Créalo en la raíz de tu proyecto con las variables que necesitas.
+  ```bash
+  API_KEY=1324567890
+  API_SECRET=ABCDEFGHI
+  ```
+  De esta manera, las variables de entorno estarán disponibles en tu aplicación y utilizando el objeto global de **NodeJS** llamado <code>process</code> puedes acceder a estos valores de la siguiente manera:
+  ```bash
+  process.env.API_KEY
+  process.env.API_SECRET
+  ```
+
+  ### Consejos sobre las variables de entorno
+  Es muy importante **NO VERSIONAR** el archivo <code>.env</code> en el repositorio de tu proyecto. No guardes las claves secretas de tu aplicación en **GIT**.
+
+  Para asegurar esto, agrega el archivo <code>.env</code> a la configuración del archivo <code>.gitignore</code> para que no sea reconocido por Git y este no lo guarde en el repositorio.
+
+  Lo que puedes hacer es crear un archivo llamado <code>.env.example</code> que contendrá un modelo de las variables de entorno que tu aplicación necesita, pero no sus valores.
+  ```bash
+  API_KEY=
+  API_SECRET=
+  ```
+  De este modo, cuidas tu aplicación y guardas un archivo para que cualquier desarrollador que tome el proyecto, sepa qué variables necesita configurar para el funcionamiento de la misma.
+
+  **Cuadro de código para usar el módulo de configuración**
+
+  ```bash
+  npm i --save @nestjs/config
+  ```
+
+  ```bash
+  // .gitignore
+  *.env
+  ```
+
+  ```bash
+  // .env
+  DATABASE_NAME=my_db
+  API_KEY='1234'
+  ```
+  ```typescript
+  // src/app.module.ts
+  ...
+  import { ConfigModule } from '@nestjs/config';
+
+  @Module({
+    imports: [
+      ConfigModule.forRoot({ // 👈 Implement ConfigModule
+        envFilePath: '.env',
+        isGlobal: true,
+      }),
+      ...
+    ],
+  })
+  export class AppModule {}
+  ```
+
+  ```typescript
+  // src/users/services/users.service.ts
+  import { ConfigService } from '@nestjs/config';
+  ...
+  @Injectable()
+  export class UsersService {
+    constructor(
+      private productsService: ProductsService,
+      private configService: ConfigService, // 👈 inject ConfigService
+    ) {}
+    ...
+
+    findAll() {
+      const apiKey = this.configService.get('API_KEY'); // 👈 get API_KEY
+      const dbName = this.configService.get('DATABASE_NAME');  // 👈 get DATABASE_NAME
+      console.log(apiKey, dbName);
+      return this.users;
+    }
+
+    ...
+  }
+  ```
+
