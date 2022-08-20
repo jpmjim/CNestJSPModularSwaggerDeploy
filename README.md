@@ -736,3 +736,141 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
   NODE_ENV=prod npm run start:dev
   NODE_ENV=stag npm run start:dev
   ```
+
+## Tipado en config
+  A medida que tu aplicación acumule más y más variables de entorno, puede volverse inmanejable y es propenso a tener errores el no recordar sus nombres o escribirlos mal. A continuación verás como tipar variables.
+
+  ### Cómo hacer el tipado de variables de entorno
+  Seguriza tu lista de variables de entorno de manera que evites errores que son difíciles de visualizar. Veamos cómo puedes tipar tus variables.
+
+  **1. Archivo de tipado de variables**
+
+  Crea un archivo al que denominaremos <code>config.ts</code> que contendrá el tipado de tu aplicación con ayuda de la dependencia <code>@nestjs/config</code>.
+  ```typescript
+  // src/config.ts
+  import { registerAs } from "@nestjs/config";
+
+  export default registerAs('config', () => {
+    return {
+      database: {
+        name: process.env.DATABASE_NAME,
+        port: process.env.DATABASE_PORT,
+      },
+      apiKey: process.env.API_KEY,
+    }
+  })
+  ```
+  Importa **registerAs** desde <code>@nestjs/config</code> que servirá para crear el tipado de datos. Crea un objeto con la estructura de datos que necesita tu aplicación. Este objeto contiene los valores de las variables de entorno tomados con el objeto global de NodeJS, <code>process</code>.
+
+  **2. Importación del tipado de datos**
+
+  Importa el nuevo archivo de configuración en el módulo de tu proyecto de la siguiente manera para que este sea reconocido.
+  ```typescript
+  import { ConfigModule } from '@nestjs/config';
+  import config from './config';
+
+  @Global()
+  @Module({
+    imports: [
+      HttpModule,
+      ConfigModule.forRoot({
+        envFilePath: '.env',
+        load: [config],
+        isGlobal: true
+      }),
+    ],
+  })
+  export class AppModule {}
+  ```
+
+  **3. Tipado de variables de entorno**
+  Es momento de utilizar este objeto que genera una interfaz entre nuestra aplicación y las variables de entorno para no confundir el nombre de cada variable.
+  ```typescript
+  import { Controller, Inject } from '@nestjs/common';
+  import { ConfigType } from '@nestjs/config';
+  import config from './config';
+
+  @Controller()
+  export class AppController {
+
+    constructor(
+      @Inject(config.KEY) private configService: ConfigType<typeof config>
+    ) {}
+    
+    getEnvs(): string {
+      const apiKey = this.configService.apiKey;
+      const name = this.configService.database.name;
+      return `Envs: ${apiKey} ${name}`;
+    }
+  }
+  ```
+  Observa la configuración necesaria para inyectar y tipar tus variables de entorno. Ahora ya no tendrás que preocuparte por posibles errores al invocar a una de estas variables y evitar dolores de cabeza debugueando estos errores.
+
+  **Cuadro de código para tipado en config**
+  ```typescript
+  // .env
+  DATABASE_NAME=my_db_prod
+  API_KEY=999
+  DATABASE_PORT=8091 // 👈
+  ```
+  ```typescript
+  // .stag.env
+  DATABASE_NAME=my_db_stag
+  API_KEY=333
+  DATABASE_PORT=8091 // 👈
+  ```
+  ```typescript
+  // .prod.env
+  DATABASE_NAME=my_db_prod
+  API_KEY=999
+  DATABASE_PORT=8091 // 👈
+  ```
+  ```typescript
+  // src/config.ts // 👈 new file
+  import { registerAs } from '@nestjs/config';
+
+  export default registerAs('config', () => { // 👈 export default
+    return { 
+      database: {
+        name: process.env.DATABASE_NAME,
+        port: process.env.DATABASE_PORT,
+      },
+      apiKey: process.env.API_KEY,
+    };
+  });
+  ```
+  ```typescript
+  // src/app.module.ts
+  import config from './config'; // 👈
+
+  @Module({
+    imports: [
+      ConfigModule.forRoot({
+        envFilePath: enviroments[process.env.NODE_ENV] || '.env',
+        load: [config], // 👈
+        isGlobal: true,
+      }),
+      ...
+    ],
+    ...
+  })
+  export class AppModule {}
+  ```
+  ```typescript
+  // src/app.service.ts
+  import { ConfigType } from '@nestjs/config'; // 👈 Import ConfigType 
+  import config from './config'; // 👈 config file
+
+  @Injectable()
+  export class AppService {
+    constructor(
+      @Inject('TASKS') private tasks: any[],
+      @Inject(config.KEY) private configService: ConfigType<typeof config>, // 👈
+    ) {}
+    getHello(): string {
+      const apiKey = this.configService.apiKey; // 👈
+      const name = this.configService.database.name; // 👈
+      return `Hello World! ${apiKey} ${name}`;
+    }
+  }
+  ```
