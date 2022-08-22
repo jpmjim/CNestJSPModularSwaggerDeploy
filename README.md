@@ -874,3 +874,64 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
     }
   }
   ```
+
+## Validación de esquemas en .envs con Joi
+  Las variables de entorno son sensibles, pueden ser requeridas o no, pueden ser un string o un number. **Validemos tus variables de entorno para evitar errores** u omisiones de las mismas.
+
+  ### Validando variables de entorno
+  Instala la dependencia [Joi](https://www.npmjs.com/package/joi) con el comando <code>npm instal joi --save</code>. La misma nos dará las herramientas para realizar validaciones de nuestras variables de entorno.
+
+  Importa **Joi** en el módulo de tu aplicación y a través de la propiedad validationSchema del objeto que recibe el ConfigModule crea el tipado y las validaciones de tus variables de entorno.
+  ```typescript
+  import { ConfigModule } from '@nestjs/config';
+  import * as Joi from 'joi';
+
+  import config from './config';
+
+  @Module({
+    imports: [
+      ConfigModule.forRoot({
+        envFilePath: '.env',
+        load: [config],
+        isGlobal: true,
+        validationSchema: Joi.object({
+          API_KEY: Joi.string().required(),
+          DATABASE_NAME: Joi.string().required(),
+          DATABASE_PORT: Joi.number().required(),
+        })
+      }),
+    ],
+    ],
+  })
+  export class AppModule {}
+  ```
+  Lo que hace **Joi** es asegurar que, en el archivo <code>.env</code>, existan las variables de entorno indicadas dependiendo si son obligatorias o no, además de validar el tipo para no ingresar un string donde debería ir un number.
+
+  En equipos de trabajo profesional, quienes suelen desplegar las aplicaciones en los entornos es el equipo **DevOps** y ellos **no necesariamente saben qué variables de entorno necesita tu aplicación** y de qué tipo son. Gracias a esta configuración, **tu app emitirá mensajes de error** claros por consola cuando alguna variable no sea correcta.
+
+  **Cuadro de código para variables de entorno**
+  ```bash
+  npm install --save joi
+  ```
+  ```typescript
+  // src/app.module.ts
+  import * as Joi from 'joi';  // 👈
+
+  @Module({
+    imports: [
+      ConfigModule.forRoot({
+        envFilePath: enviroments[process.env.NODE_ENV] || '.env',
+        load: [config],
+        isGlobal: true,
+        validationSchema: Joi.object({ // 👈
+          API_KEY: Joi.number().required(),
+          DATABASE_NAME: Joi.string().required(),
+          DATABASE_PORT: Joi.number().required(),
+        }),
+      }),
+      ...
+    ],
+    ...
+  })
+  export class AppModule {}
+  ```
