@@ -1072,3 +1072,136 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
   import { PartialType } from '@nestjs/swagger';
   ```
 
+## Extendiendo la documentación
+  La documentación automática que genera NestJS y Swagger es muy fácil de implementar y otorga una buena base. **La documentación de tu aplicación puede ser aún más completa y detallada**, si así lo quieres con algo de trabajo de tu parte.
+
+  ### Cómo hacer la documentación personalizada
+  Veamos varios decoradores que te servirán para ampliar la documentación de tu API.
+
+  **Descripción de las propiedades**
+
+  En tus DTO, puedes dar detalle sobre qué se espera recibir en cada propiedad de tus endpoints gracias al decorador <code>@ApiProperty()</code>
+  ```typescript
+  import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
+  import { ApiProperty, PartialType, OmitType } from '@nestjs/swagger';
+
+  export class CreateProductDTO {
+
+    @ApiProperty({ description: 'Nombre del producto' })
+    @IsNotEmpty()
+    @IsString()
+    readonly name: string;
+
+    @ApiProperty({ description: 'Descripción del producto' })
+    @IsNotEmpty()
+    @IsString()
+    readonly description: string;
+
+    @ApiProperty({ description: 'Precio del producto' })
+    @IsNotEmpty()
+    @IsNumber()
+    readonly price: number;
+  }
+  ```
+  **Descripción de los controladores**
+
+  Puedes agrupar los endpoints en la documentación por controlador con el decorador <code>@ApiTags()</code> y describir, endpoint por endpoint, la funcionalidad de cada uno con el decorador <code>@ApiOperation()</code>.
+  ```typescript
+  import { ApiTags, ApiOperation } from '@nestjs/swagger';
+
+  @ApiTags('Productos')
+  @Controller()
+  export class AppController {
+
+    @ApiOperation({ summary: 'Obtener lista de productos.' })
+    @Get('products')
+    getProducts() {
+      // ...
+    }
+  }
+  ```
+  Para obtener un resultado en la documentación de tu API como el siguiente:
+
+  ![](https://static.platzi.com/media/user_upload/Screenshot%20from%202022-06-17%2015-42-27-5241b1e3-815e-483c-895c-f7387b19d55d.jpg)
+
+  De este modo, la documentación de tu aplicación es súper profesional y está lista para ser recibida por el equipo front-end o por clientes externos que consumirán el servicio.
+
+  **Cuadro de código para documentación personalizada**
+
+  ```typescript
+  // src/products/dtos/products.dtos.ts
+  import { PartialType, ApiProperty } from '@nestjs/swagger';
+
+  import {
+    IsString,
+    IsNumber,
+    IsUrl,
+    IsNotEmpty,
+    IsPositive,
+  } from 'class-validator';
+  import { PartialType, ApiProperty } from '@nestjs/swagger'; // 👈
+
+  export class CreateProductDto {
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ description: `product's name` }) // 👈
+    readonly name: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @ApiProperty() // 👈
+    readonly description: string;
+
+    @IsNumber()
+    @IsNotEmpty()
+    @IsPositive()
+    @ApiProperty() // 👈
+    readonly price: number;
+
+    @IsNumber()
+    @IsNotEmpty()
+    @ApiProperty() // 👈
+    readonly stock: number;
+
+    @IsUrl()
+    @IsNotEmpty()
+    @ApiProperty() // 👈
+    readonly image: string;
+  }
+
+  export class UpdateProductDto extends PartialType(CreateProductDto) {}
+  ```
+  ```typescript
+  // src/products/controllers/products.controller.ts
+  import { ApiTags, ApiOperation } from '@nestjs/swagger'; // 👈
+
+  @ApiTags('products') // 👈
+  @Controller('products')
+  export class ProductsController {
+    constructor(private productsService: ProductsService) {}
+
+    @Get()
+    @ApiOperation({ summary: 'List of products' }) // 👈
+    getProducts(
+      @Query('limit') limit = 100,
+      @Query('offset') offset = 0,
+      @Query('brand') brand: string,
+    ) {
+      // return {
+      //   message: `products limit=> ${limit} offset=> ${offset} brand=> ${brand}`,
+      // };
+      return this.productsService.findAll();
+    }
+  }
+  ```
+  ```typescript
+  // src/products/controllers/brands.controller.ts
+  import { ApiTags } from '@nestjs/swagger';
+
+
+  @ApiTags('brands') // 👈
+  @Controller('brands')
+  export class BrandsController {
+    ...
+  }
+  ```
