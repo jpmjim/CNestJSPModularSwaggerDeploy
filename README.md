@@ -935,3 +935,140 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
   })
   export class AppModule {}
   ```
+
+## Integrando Swagger y PartialType con Open API
+  **Una API profesional debe estar documentada**. Cuando hablamos de documentación, nos suena a una tarea tediosa que nadie quiere realizar. Afortunadamente, NestJS permite automatizar fácilmente la creación de la misma.
+
+  - [OpenAPI Specification](https://spec.openapis.org/oas/v3.1.0)
+  - [NestJS Swagger](https://docs.nestjs.com/openapi/introduction)
+  - [Using the CLI plugin](https://docs.nestjs.com/openapi/cli-plugin#using-the-cli-plugin)
+
+  ### Cómo hacer la documentación API Rest
+  [Swagger](https://swagger.io/) es un reconocido set de herramientas para la documentación de API Rest. Instala las dependencias necesarias con el comando <code>npm install --save @nestjs/swagger swagger-ui-express</code> y configura el archivo <code>ain.ts</code>m con el siguiente código.
+  ```typescript
+  // main.ts
+  import { NestFactory } from '@nestjs/core';
+  import { AppModule } from './app.module';
+  import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+
+  async function bootstrap() {
+    const app = await NestFactory.create(AppModule);
+      
+    // Configuración Swagger en NestJS
+    const config = new DocumentBuilder()
+      .setTitle('Platzi API')
+      .setDescription('Documentación Platzi API')
+      .setVersion('1.0')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    
+    // URL API
+    SwaggerModule.setup('docs', app, document);
+
+    await app.listen(process.env.PORT || 3000);
+  }
+  bootstrap();
+  ```
+  Setea el título, descripción y versión de tu documentación. Lo más importante es la URL para acceder a la misma.
+
+  Levanta el servidor con <code>npm run start:dev</code> y accede a <code>localhost:3000/docs</code> para visualizar la documentación autogenerada que mapea automáticamente todos los endpoints de tu aplicación.
+
+  ### Tipado de la documentación
+  La documentación autogenerada por Swagger es bastante simple, puedes volverla más completa tipando los datos de entrada y salida de cada endpoint gracias a los DTO.
+
+  Busca el archivo <code>nest-cli.json</code> en la raíz de tu proyecto y agrega el siguiente plugin:
+  ```json
+  {
+    "$schema": "https://json.schemastore.org/nest-cli",
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "src",
+    "compileOptions": {
+      "plugins": ["@nestjs/swagger"]
+    }
+  }
+  ```
+  A continuación, prepara tus DTO de la siguiente manera:
+  ```typescript
+  import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
+  import { ApiProperty, PartialType, OmitType } from '@nestjs/swagger';
+
+  export class CreateProductDTO {
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
+    readonly name: string;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsString()
+    readonly description: string;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsNumber()
+    readonly price: number;
+  }
+
+  export class UpdateAuthorDto extends PartialType(
+    OmitType(CreateProductDTO, ['name']),
+  ) {}
+  ```
+  Lo más relevante aquí es importar **PartialType y OmitType** desde <code>@nestjs/swagger</code> en lugar de importarlo desde @nestjs/mapped-types. Coloca también el decorador <code>@ApiProperty()</code> en cada una de las propiedades que el DTO necesita.
+  ![](https://static.platzi.com/media/user_upload/Screenshot%20from%202022-06-17%2014-08-51%281%29-436e5207-765c-4d51-94b4-b3f72d1b8c93.jpg)
+
+  De esta manera, observarás en la documentación que indica el tipo de dato que requiere cada uno de tus endpoints.
+
+  ### Cuadro de código para uso de swagger
+  ```bash
+  npm install --save @nestjs/swagger swagger-ui-express
+  ```
+  ```typescript
+  // src/main.ts 
+  import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+
+  async function bootstrap() {
+    ...
+    const config = new DocumentBuilder()
+      .setTitle('API')
+      .setDescription('PLATZI STORE')
+      .setVersion('1.0')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+    ...
+    await app.listen(3000);
+  }
+  bootstrap();
+  ```
+  ```json
+  # nest-cli.json
+  {
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "src",
+    "compilerOptions": {
+      "plugins": ["@nestjs/swagger/plugin"]
+    }
+  }
+  ```
+  ```typescript
+  // src/products/dtos/brand.dtos.ts
+  import { PartialType } from '@nestjs/swagger';
+  ```
+  ```typescript
+  // src/products/dtos/category.dtos.ts
+  import { PartialType } from '@nestjs/swagger';
+  ```
+  ```typescript
+  // src/products/dtos/products.dtos.ts
+  import { PartialType } from '@nestjs/swagger';
+  ```
+  ```typescript
+  // src/users/dtos/customer.dto.ts
+  import { PartialType } from '@nestjs/swagger';
+  ```
+  ```typescript
+  // src/users/dtos/user.dto.ts
+  import { PartialType } from '@nestjs/swagger';
+  ```
+
