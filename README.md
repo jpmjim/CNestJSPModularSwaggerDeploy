@@ -1205,3 +1205,44 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
     ...
   }
   ```
+
+## Configuración de Heroku
+  Llega el momento del despliegue de tu aplicación en un entorno productivo. Utilizaremos [Heroku](https://www.heroku.com/), uno de los proveedores de servidores Cloud más utilizado y fácil de utilizar de la industria.
+
+  ### Configuración del proyecto al usar Heroku
+  Preparar tu aplicación para Heroku requiere de algunas configuraciones sencillas.
+
+  **Configuración de puerto y CORS**
+
+  Heroku, por defecto, usa una variable de entorno llamada <code>PORT</code> para levantar la aplicación en un puerto aleatorio. Asegúrate de configurar esta variable dinámica en el bootstrap de tu app, además de activar CORS para no tener problemas con el mismo. Agrega las configuraciones en el archivo <code>main.ts</code>.
+  ```typescript
+  // main.ts
+  import { NestFactory } from '@nestjs/core';
+  import { AppModule } from './app.module';
+
+  async function bootstrap() {
+    const app = await NestFactory.create(AppModule);
+    app.enableCors();
+    await app.listen(process.env.PORT || 3000);
+  }
+  bootstrap();
+  ```
+
+  **Configuración versión de NodeJS**
+
+  Edita el archivo package.json para especificar la versión de NodeJS que tu aplicación necesita con la siguiente configuración:
+  ```bash
+  "engines": {
+    "node": "14.x"
+  },
+  ```
+
+  **Configuración de Heroku**
+
+  Heroku requiere de un pequeño archivo adicional en la raíz de tu proyecto llamado Procfile que contiene el comando que da inicio a tu proyecto:
+  ```bash
+  web: npm run start:prod
+  ```
+  Además, [Heroku posee su propio CLI](https://devcenter.heroku.com/articles/heroku-cli) que nos ayudará en el despliegue de cualquier aplicación. Instálalo dependiendo tu sistema operativo para estar listo para el despliegue de tu app.
+
+  [Deploying Node.js Apps on Heroku](https://devcenter.heroku.com/articles/deploying-nodejs)
