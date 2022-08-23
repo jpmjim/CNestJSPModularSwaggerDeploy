@@ -1246,3 +1246,48 @@ Curso de NestJS: Programación Modular, Documentación con Swagger y Deploy
   Además, [Heroku posee su propio CLI](https://devcenter.heroku.com/articles/heroku-cli) que nos ayudará en el despliegue de cualquier aplicación. Instálalo dependiendo tu sistema operativo para estar listo para el despliegue de tu app.
 
   [Deploying Node.js Apps on Heroku](https://devcenter.heroku.com/articles/deploying-nodejs)
+
+## Deploy de NestJS en Heroku
+  Comandos:
+  - heroku login
+  - heroku create
+  - heroku local web "provar de forma local"
+
+  Teniendo tu aplicación configurada correctamente. Realiza el despliegue en Heroku instalando su CLI en primer lugar.
+
+  ### Cómo hacer el despliegue en Heroku
+  Luego de instalar el CLI, realiza un heroku login para autenticarte. Si aún no posees una cuenta en Heroku, es el momento de crearte una de forma gratuita.
+
+  **Creando proyecto en Heroku**
+
+  Una vez situado en tu proyecto, utiliza el comando <code>heroku create -a "nombre-proyecto"</code> para crear un nuevo proyecto remoto en tu cuenta de Heroku.
+
+  Heroku, internamente, posee su propio servidor de GIT. Si realizas un <code>git remote -v</code>, observarás que este ha agregado a tu proyecto nuevos servidores remotos. El despliegue se hará usando los propios de Heroku.
+
+  Con el simple comando <code>git push heroku master</code> la aplicación demorará unos pocos minutos en desplegarse. Podrás observar el progreso en la consola.
+
+  La aplicación quedará desplegada en una URL proporcionada por Heroku similar <code>https://"nombre_proyecto".herokuapp.com/</code>a , a la cual puedes acceder para observar si tu aplicación fue desplegada con éxito.
+
+  **Variables de entorno en Heroku**
+
+  Si tu aplicación utiliza variables de entorno debes configurar estas. De manera muy sencilla, el siguiente comando te permite configurar cada una de tus variables de entorno: <code>heroku config:set APP_KEY=12345</code>, mientras que el comando <code>heroku config</code>heroku config te permitirá ver una lista de las variables que ya están configuradas.
+
+  Recuerda que las variables de entorno son sensibles y debes cuidar quién tiene acceso a ellas.
+
+  ¡Felicidades! Has desplegado tu aplicación en un entorno productivo. Ahora el mundo puede acceder a tu app.
+
+  ### Cuadro de código para despliegue de Heroku
+  ```bash
+  heroku local web
+  git checkout master
+  git merge 14-step
+  git remote -v
+  git push heroku master
+  heroku logs --tail
+  npm run format
+  ```
+  También puedes usar el comando <code>heroku config:set APP_KEY=12345</code> para configurar variables de ambiente desde el CLI y esto hace que la app se reinicie sin la necesidad de enviar un push.
+
+  Notas:
+  - Cuidado con los typos 🙂
+  - No dejes comments en producción 📢
